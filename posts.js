@@ -1,4 +1,5 @@
 (function (){
+    let usp = new URLSearchParams();
     const gorestURL = 'https://gorest.co.in/public-api';
     async function sendRequest(url,method,body = null){
         const headers = {
@@ -18,15 +19,27 @@
     }
     
     async function createPosts(){
+        const location = window.location;
+        let usp = new URLSearchParams(location.search);
+        if (!usp.get('page')){
+            usp.set('page',1);
+        }
+        
         let postsAlbum = document.querySelector('main .container');
         let postsCards = postsAlbum.querySelectorAll('.col');
-        const postsData = await loadPosts(1);
-        console.log(postsData);
+        const numberOfPages = (await sendRequest(gorestURL+'/posts','GET')).meta.pagination.total;
+        const curPage = usp.get('page');
+        console.log(curPage);
+        const postsData = await loadPosts(curPage);
         for(let i=0;i<postsCards.length;i++){
             let postCard = postsCards[i];
-            let postText = postCard.querySelector('.card-text')
-            postText.innerHTML = postsData.data[i].body;
+            let postText = postCard.querySelector('.card-text');
+            let postTitle = postCard.querySelector('h3');
+            let detailPostLink = postCard.querySelector('.stretched-link');
+            postTitle.innerHTML = "Post #"+(i+1+(curPage-1)*20);
+            postText.innerHTML = postsData.data[i].body.slice(0,200)+"...";
+            detailPostLink.href = "/detail-post.html?id="+i;
         }
     }
-    window.createPosts = createPosts();
+    window.createPosts = createPosts;
 })()
